@@ -1,373 +1,270 @@
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#101820">
-
     <title>VIDEO STUDIO — Editor</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     <link rel="stylesheet" href="css/editor.css">
 </head>
 
 <body>
+<div class="editor-app">
 
-    <div class="editor-app">
+    <header class="topbar">
+        <div class="brand-area">
+            <a href="index.html" class="back-button" aria-label="العودة">
+                <span>←</span>
+            </a>
+            <div class="brand-logo">VS</div>
+            <div class="brand-info">
+                <strong>VIDEO STUDIO</strong>
+                <span>PRO VIDEO EDITOR</span>
+            </div>
+        </div>
 
-        <!-- TOP BAR -->
-        <header class="topbar">
+        <div class="project-info">
+            <span class="project-status"></span>
+            <span class="project-name">مشروع بدون عنوان</span>
+        </div>
 
-            <div class="brand-area">
-                <a href="index.html" class="back-button" aria-label="العودة">
-                    <span>←</span>
-                </a>
+        <div class="topbar-actions">
+            <button class="top-action" id="undoBtn" title="تراجع">↶</button>
+            <button class="top-action" id="redoBtn" title="إعادة">↷</button>
+            <button class="save-button" id="saveBtn">حفظ المشروع</button>
+            <button class="export-button" id="exportBtn">
+                تصدير الفيديو <span>↗</span>
+            </button>
+        </div>
+    </header>
 
-                <div class="brand-logo">VS</div>
+    <main class="workspace">
 
-                <div class="brand-info">
-                    <strong>VIDEO STUDIO</strong>
-                    <span>PRO VIDEO EDITOR</span>
+        <aside class="media-panel">
+            <div class="panel-heading">
+                <div>
+                    <h2>مكتبة الوسائط</h2>
+                    <p>MEDIA LIBRARY</p>
                 </div>
+                <button class="panel-menu" aria-label="القائمة">•••</button>
             </div>
 
-            <div class="project-info">
-                <span class="project-status"></span>
-                <span class="project-name">مشروع بدون عنوان</span>
+            <div class="media-tabs">
+                <button class="media-tab active" data-tab="media">الوسائط</button>
+                <button class="media-tab" data-tab="audio">الصوت</button>
+                <button class="media-tab" data-tab="text">النصوص</button>
             </div>
 
-            <div class="topbar-actions">
-                <button class="top-action" id="undoBtn" title="تراجع">↶</button>
-                <button class="top-action" id="redoBtn" title="إعادة">↷</button>
+            <div class="import-area" id="importArea">
+                <div class="import-icon">＋</div>
+                <h3>أضف ملفاتك</h3>
+                <p>اختر الصور والفيديوهات والصوت من جهازك</p>
 
-                <button class="save-button" id="saveBtn">
-                    حفظ المشروع
+                <button id="importBtn" class="import-button">
+                    استيراد الوسائط
                 </button>
 
-                <button class="export-button" id="exportBtn">
-                    تصدير الفيديو
-                    <span>↗</span>
-                </button>
+                <input
+                    type="file"
+                    id="mediaInput"
+                    accept="image/*,video/*,audio/*"
+                    multiple
+                    hidden
+                >
             </div>
 
-        </header>
+            <div class="media-library" id="mediaLibrary">
+                <div class="empty-media">
+                    <span>▧</span>
+                    <p>مكتبة الوسائط فارغة</p>
+                    <small>ابدأ باستيراد ملفاتك</small>
+                </div>
+            </div>
+        </aside>
 
+        <section class="center-workspace">
 
-        <!-- MAIN WORKSPACE -->
-        <main class="workspace">
-
-            <!-- MEDIA PANEL -->
-            <aside class="media-panel">
-
-                <div class="panel-heading">
-                    <div>
-                        <h2>مكتبة الوسائط</h2>
-                        <p>MEDIA LIBRARY</p>
-                    </div>
-
-                    <button class="panel-menu" aria-label="القائمة">•••</button>
+            <div class="preview-header">
+                <div class="preview-title">
+                    <span class="live-indicator"></span>
+                    <span>معاينة المشروع</span>
                 </div>
 
-                <div class="media-tabs">
-                    <button class="media-tab active" data-tab="media">الوسائط</button>
-                    <button class="media-tab" data-tab="audio">الصوت</button>
-                    <button class="media-tab" data-tab="text">النصوص</button>
-                </div>
-
-                <div class="import-area" id="importArea">
-
-                    <div class="import-icon">＋</div>
-
-                    <h3>أضف ملفاتك</h3>
-
-                    <p>
-                        اسحب الصور والفيديوهات هنا
-                        أو اختر الملفات من جهازك
-                    </p>
-
-                    <button id="importBtn" class="import-button">
-                        استيراد الوسائط
+                <div class="preview-settings">
+                    <button class="preview-option">
+                        ملاءمة الشاشة <span>⌄</span>
                     </button>
+                    <button class="preview-option">
+                        16:9 <span>⌄</span>
+                    </button>
+                </div>
+            </div>
 
-                    <input
-                        type="file"
-                        id="mediaInput"
-                        accept="image/*,video/*,audio/*"
-                        multiple
-                        hidden
-                    >
+            <div class="preview-stage">
+                <div class="preview-canvas" id="previewCanvas">
+
+                    <div class="preview-placeholder" id="previewPlaceholder">
+                        <div class="placeholder-icon">▶</div>
+                        <h2>مساحة الإبداع تبدأ هنا</h2>
+                        <p>استورد فيديو أو صورة لبدء مشروعك</p>
+                    </div>
+
+                    <video id="previewVideo" controls playsinline hidden></video>
+                    <img id="previewImage" alt="معاينة الصورة" hidden>
 
                 </div>
+            </div>
 
-                <div class="media-library" id="mediaLibrary">
+            <div class="playback-panel">
+                <div class="playback-time">
+                    <span id="currentTime">00:00:00</span>
+                    <span class="time-divider">/</span>
+                    <span id="totalTime">00:00:00</span>
+                </div>
 
-                    <div class="empty-media">
-                        <span>▧</span>
-                        <p>مكتبة الوسائط فارغة</p>
-                        <small>ابدأ باستيراد ملفاتك</small>
+                <div class="playback-controls">
+                    <button class="control-button" id="previousBtn" title="السابق">|◀</button>
+                    <button class="play-button" id="playBtn" title="تشغيل">▶</button>
+                    <button class="control-button" id="nextBtn" title="التالي">▶|</button>
+                </div>
+
+                <div class="preview-quality">
+                    <span></span>
+                    PREVIEW
+                </div>
+            </div>
+
+            <section class="timeline-panel">
+
+                <div class="timeline-header">
+                    <div class="timeline-heading">
+                        <h2>الخط الزمني</h2>
+                        <span>TIMELINE</span>
+                    </div>
+
+                    <div class="timeline-tools">
+                        <button class="timeline-tool" title="إضافة مسار">＋</button>
+                        <button class="timeline-tool" title="تقسيم">✂</button>
+                        <button class="timeline-tool" title="حذف">⌫</button>
+                        <div class="timeline-divider"></div>
+                        <button class="timeline-tool" title="تصغير">−</button>
+                        <button class="timeline-tool" title="تكبير">＋</button>
+                    </div>
+                </div>
+
+                <div class="timeline-ruler">
+                    <div class="ruler-label">00:00</div>
+                    <div class="ruler-label">00:05</div>
+                    <div class="ruler-label">00:10</div>
+                    <div class="ruler-label">00:15</div>
+                    <div class="ruler-label">00:20</div>
+                    <div class="ruler-label">00:25</div>
+                    <div class="ruler-label">00:30</div>
+                </div>
+
+                <div class="timeline-content">
+
+                    <div class="track-labels">
+                        <div class="track-label">
+                            <span class="track-icon">▣</span>
+                            <span>الفيديو</span>
+                        </div>
+                        <div class="track-label">
+                            <span class="track-icon">▧</span>
+                            <span>الصور</span>
+                        </div>
+                        <div class="track-label">
+                            <span class="track-icon">♫</span>
+                            <span>الصوت</span>
+                        </div>
+                        <div class="track-label">
+                            <span class="track-icon">T</span>
+                            <span>النصوص</span>
+                        </div>
+                    </div>
+
+                    <div class="tracks-area" id="tracksArea">
+                        <div class="timeline-playhead"></div>
+
+                        <div class="track-lane" data-track="video">
+                            <button type="button" class="track-add-button" data-add-track="video">
+                                <span>＋</span>
+                                <span>اضغط لإضافة فيديو</span>
+                            </button>
+                        </div>
+
+                        <div class="track-lane" data-track="images">
+                            <button type="button" class="track-add-button" data-add-track="image">
+                                <span>＋</span>
+                                <span>اضغط لإضافة صورة</span>
+                            </button>
+                        </div>
+
+                        <div class="track-lane" data-track="audio">
+                            <button type="button" class="track-add-button" data-add-track="audio">
+                                <span>＋</span>
+                                <span>اضغط لإضافة أغنية أو صوت</span>
+                            </button>
+                        </div>
+
+                        <div class="track-lane" data-track="text">
+                            <button type="button" class="track-add-button" data-add-track="text">
+                                <span>＋</span>
+                                <span>اضغط لإضافة نص</span>
+                            </button>
+                        </div>
                     </div>
 
                 </div>
-
-            </aside>
-
-
-            <!-- CENTER EDITOR -->
-            <section class="center-workspace">
-
-                <!-- PREVIEW HEADER -->
-                <div class="preview-header">
-
-                    <div class="preview-title">
-                        <span class="live-indicator"></span>
-                        <span>معاينة المشروع</span>
-                    </div>
-
-                    <div class="preview-settings">
-
-                        <button class="preview-option">
-                            ملاءمة الشاشة
-                            <span>⌄</span>
-                        </button>
-
-                        <button class="preview-option">
-                            16:9
-                            <span>⌄</span>
-                        </button>
-
-                    </div>
-
-                </div>
-
-
-                <!-- VIDEO PREVIEW -->
-                <div class="preview-stage">
-
-                    <div class="preview-canvas" id="previewCanvas">
-
-                        <div class="preview-placeholder" id="previewPlaceholder">
-
-                            <div class="placeholder-icon">▶</div>
-
-                            <h2>مساحة الإبداع تبدأ هنا</h2>
-
-                            <p>
-                                استورد فيديو أو صورة لبدء مشروعك
-                            </p>
-
-                        </div>
-
-                        <video
-                            id="previewVideo"
-                            controls
-                            playsinline
-                            hidden
-                        ></video>
-
-                        <img
-                            id="previewImage"
-                            alt="معاينة الصورة"
-                            hidden
-                        >
-
-                    </div>
-
-                </div>
-
-
-                <!-- PLAYBACK CONTROLS -->
-                <div class="playback-panel">
-
-                    <div class="playback-time">
-                        <span id="currentTime">00:00:00</span>
-                        <span class="time-divider">/</span>
-                        <span id="totalTime">00:00:00</span>
-                    </div>
-
-                    <div class="playback-controls">
-
-                        <button class="control-button" id="previousBtn" title="السابق">
-                            |◀
-                        </button>
-
-                        <button class="play-button" id="playBtn" title="تشغيل">
-                            ▶
-                        </button>
-
-                        <button class="control-button" id="nextBtn" title="التالي">
-                            ▶|
-                        </button>
-
-                    </div>
-
-                    <div class="preview-quality">
-                        <span></span>
-                        PREVIEW
-                    </div>
-
-                </div>
-
-
-                <!-- TIMELINE -->
-                <section class="timeline-panel">
-
-                    <div class="timeline-header">
-
-                        <div class="timeline-heading">
-                            <h2>الخط الزمني</h2>
-                            <span>TIMELINE</span>
-                        </div>
-
-                        <div class="timeline-tools">
-
-                            <button class="timeline-tool" title="إضافة مسار">＋</button>
-                            <button class="timeline-tool" title="تقسيم">✂</button>
-                            <button class="timeline-tool" title="حذف">⌫</button>
-
-                            <div class="timeline-divider"></div>
-
-                            <button class="timeline-tool" title="تصغير">−</button>
-                            <button class="timeline-tool" title="تكبير">＋</button>
-
-                        </div>
-
-                    </div>
-
-
-                    <div class="timeline-ruler">
-
-                        <div class="ruler-label">00:00</div>
-                        <div class="ruler-label">00:05</div>
-                        <div class="ruler-label">00:10</div>
-                        <div class="ruler-label">00:15</div>
-                        <div class="ruler-label">00:20</div>
-                        <div class="ruler-label">00:25</div>
-                        <div class="ruler-label">00:30</div>
-
-                    </div>
-
-
-                    <div class="timeline-content">
-
-                        <div class="track-labels">
-
-                            <div class="track-label">
-                                <span class="track-icon">▣</span>
-                                <span>الفيديو</span>
-                            </div>
-
-                            <div class="track-label">
-                                <span class="track-icon">▧</span>
-                                <span>الصور</span>
-                            </div>
-
-                            <div class="track-label">
-                                <span class="track-icon">♫</span>
-                                <span>الصوت</span>
-                            </div>
-
-                            <div class="track-label">
-                                <span class="track-icon">T</span>
-                                <span>النصوص</span>
-                            </div>
-
-                        </div>
-
-
-                        <div class="tracks-area" id="tracksArea">
-
-                            <div class="timeline-playhead"></div>
-
-                            <div class="track-lane" data-track="video">
-                                <div class="track-empty">اسحب الفيديو هنا</div>
-                            </div>
-
-                            <div class="track-lane" data-track="images">
-                                <div class="track-empty">أضف الصور هنا</div>
-                            </div>
-
-                            <div class="track-lane" data-track="audio">
-                                <div class="track-empty">أضف الموسيقى هنا</div>
-                            </div>
-
-                            <div class="track-lane" data-track="text">
-                                <div class="track-empty">أضف النصوص هنا</div>
-                            </div>
-
-                        </div>
-
-                    </div>
-
-                </section>
-
             </section>
+        </section>
 
-
-            <!-- PROPERTIES PANEL -->
-            <aside class="properties-panel">
-
-                <div class="panel-heading">
-
-                    <div>
-                        <h2>خصائص العنصر</h2>
-                        <p>PROPERTIES</p>
-                    </div>
-
-                    <button class="panel-menu" aria-label="القائمة">•••</button>
-
+        <aside class="properties-panel">
+            <div class="panel-heading">
+                <div>
+                    <h2>خصائص العنصر</h2>
+                    <p>PROPERTIES</p>
                 </div>
+                <button class="panel-menu" aria-label="القائمة">•••</button>
+            </div>
 
-
-                <div class="properties-content" id="propertiesContent">
-
-                    <div class="properties-empty">
-
-                        <div class="properties-icon">◈</div>
-
-                        <h3>لوحة التحكم</h3>
-
-                        <p>
-                            حدد عنصرًا من الخط الزمني
-                            لعرض خصائصه والتحكم فيه
-                        </p>
-
-                    </div>
-
+            <div class="properties-content" id="propertiesContent">
+                <div class="properties-empty">
+                    <div class="properties-icon">◈</div>
+                    <h3>لوحة التحكم</h3>
+                    <p>حدد عنصرًا من الخط الزمني لعرض خصائصه والتحكم فيه</p>
                 </div>
-
-            </aside>
-
-        </main>
-
-
-        <!-- BOTTOM STATUS BAR -->
-        <footer class="editor-footer">
-
-            <div class="footer-left">
-                <span class="connection-indicator"></span>
-                <span>المحرر جاهز</span>
             </div>
+        </aside>
 
-            <div class="footer-center">
-                VIDEO STUDIO PRO
-            </div>
+    </main>
 
-            <div class="footer-right">
-                <span>1920 × 1080</span>
-                <span class="footer-separator">|</span>
-                <span>30 FPS</span>
-            </div>
+    <footer class="editor-footer">
+        <div class="footer-left">
+            <span class="connection-indicator"></span>
+            <span>المحرر جاهز</span>
+        </div>
+        <div class="footer-center">VIDEO STUDIO PRO</div>
+        <div class="footer-right">
+            <span>1920 × 1080</span>
+            <span class="footer-separator">|</span>
+            <span>30 FPS</span>
+        </div>
+    </footer>
 
-        </footer>
+    <!-- Separate file selectors for each timeline track -->
+    <input type="file" id="videoTrackInput" accept="video/*" multiple hidden>
+    <input type="file" id="imageTrackInput" accept="image/*" multiple hidden>
+    <input type="file" id="audioTrackInput" accept="audio/*" multiple hidden>
 
-    </div>
+</div>
 
-
-    <script src="js/editor.js"></script>
-
+<script src="js/editor.js"></script>
 </body>
 </html>
