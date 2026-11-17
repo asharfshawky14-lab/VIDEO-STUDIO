@@ -1,10 +1,18 @@
+
 'use strict';
 
 const VideoEditor = (() => {
 
     const state = {
         files: [],
+        tracks: {
+            video: [],
+            images: [],
+            audio: [],
+            text: []
+        },
         activeFile: null,
+        activeClip: null,
         objectUrls: [],
         isPlaying: false
     };
@@ -14,6 +22,8 @@ const VideoEditor = (() => {
     function init() {
         cacheElements();
         bindEvents();
+        renderMediaLibrary();
+        renderTracks();
     }
 
     function cacheElements() {
@@ -26,14 +36,18 @@ const VideoEditor = (() => {
         elements.previewPlaceholder = document.getElementById('previewPlaceholder');
 
         elements.playBtn = document.getElementById('playBtn');
-
         elements.currentTime = document.getElementById('currentTime');
         elements.totalTime = document.getElementById('totalTime');
 
         elements.saveBtn = document.getElementById('saveBtn');
         elements.exportBtn = document.getElementById('exportBtn');
 
+        elements.videoTrackInput = document.getElementById('videoTrackInput');
+        elements.imageTrackInput = document.getElementById('imageTrackInput');
+        elements.audioTrackInput = document.getElementById('audioTrackInput');
+
         elements.tracksArea = document.getElementById('tracksArea');
+        elements.propertiesContent = document.getElementById('propertiesContent');
     }
 
     function bindEvents() {
@@ -45,6 +59,27 @@ const VideoEditor = (() => {
         elements.mediaInput.addEventListener('change', event => {
             importFiles(event.target.files);
             event.target.value = '';
+        });
+
+        elements.videoTrackInput.addEventListener('change', event => {
+            addFilesToTrack(event.target.files, 'video');
+            event.target.value = '';
+        });
+
+        elements.imageTrackInput.addEventListener('change', event => {
+            addFilesToTrack(event.target.files, 'image');
+            event.target.value = '';
+        });
+
+        elements.audioTrackInput.addEventListener('change', event => {
+            addFilesToTrack(event.target.files, 'audio');
+            event.target.value = '';
+        });
+
+        document.querySelectorAll('[data-add-track]').forEach(button => {
+            button.addEventListener('click', () => {
+                openTrackPicker(button.dataset.addTrack);
+            });
         });
 
         elements.playBtn.addEventListener('click', togglePlayback);
@@ -78,8 +113,22 @@ const VideoEditor = (() => {
         });
 
         setupDragAndDrop();
-
         setupMediaTabs();
+    }
+
+    // OPEN FILE PICKER
+
+    function openTrackPicker(type) {
+
+        if (type === 'video') {
+            elements.videoTrackInput.click();
+        } else if (type === 'image') {
+            elements.imageTrackInput.click();
+        } else if (type === 'audio') {
+            elements.audioTrackInput.click();
+        } else if (type === 'text') {
+            addTextClip();
+        }
 
     }
 
@@ -87,28 +136,15 @@ const VideoEditor = (() => {
 
     function importFiles(fileList) {
 
-        const files = Array.from(fileList);
+        Array.from(fileList).forEach(file => {
 
-        files.forEach(file => {
+            const type = getMediaType(file);
 
-            if (
-                !file.type.startsWith('image/') &&
-                !file.type.startsWith('video/') &&
-                !file.type.startsWith('audio/')
-            ) {
-                return;
-            }
+            if (!type) return;
 
-            const media = {
-                id: createId(),
-                file,
-                name: file.name,
-                type: getMediaType(file),
-                url: URL.createObjectURL(file)
-            };
+            const media = createMedia(file);
 
             state.files.push(media);
-            state.objectUrls.push(media.url);
 
         });
 
@@ -116,17 +152,101 @@ const VideoEditor = (() => {
 
     }
 
+    function addFilesToTrack(fileList, trackType) {
+
+        const files = Array.from(fileList);
+
+        files.forEach(file => {
+
+            const type = getMediaType(file);
+
+            if (!type) return;
+
+            if (
+                trackType === 'video' && type !== 'video' ||
+                trackType === 'image' && type !== 'image' ||
+                trackType === 'audio' && type !== 'audio'
+            ) {
+                return;
+            }
+
+            let media = state.files.find(item => item.file === file);
+
+            if (!media) {
+                media = createMedia(file);
+                state.files.push(media);
+            }
+
+            const clip = {
+                id: createId(),
+                media,
+                type: trackType,
+                name: media.name,
+                duration: type === 'image' ? 5 : 0
+            };
+
+            state.tracks[trackName(trackType)].push(clip);
+
+            if (trackType === 'video' || trackType === 'image') {
+                previewMedia(media);
+            }
+
+        });
+
+        renderMediaLibrary();
+        renderTracks();
+
+    }
+
+    function createMedia(file) {
+
+        const media = {
+            id: createId(),
+            file,
+            name: file.name,
+            type: getMediaType(file),
+            url: URL.createObjectURL(file)
+        };
+
+        state.objectUrls.push(media.url);
+
+        return media;
+
+    }
+
     function getMediaType(file) {
 
-        if (file.type.startsWith('video/')) {
-            return 'video';
-        }
+        if (file.type.startsWith('video/')) return 'video';
+        if (file.type.startsWith('image/')) return 'image';
+        if (file.type.startsWith('audio/')) return 'audio';
 
-        if (file.type.startsWith('image/')) {
-            return 'image';
-        }
+        return null;
 
-        return 'audio';
+    }
+
+    function trackName(type) {
+        return type === 'image' ? 'images' : type;
+    }
+
+    // TEXT TRACK
+
+    function addTextClip() {
+
+        const value = prompt('اكتب النص الذي تريد إضافته إلى الفيديو:');
+
+        if (!value || !value.trim()) return;
+
+        const clip = {
+            id: createId(),
+            type: 'text',
+            name: value.trim(),
+            duration: 5
+        };
+
+        state.tracks.text.push(clip);
+
+        renderTracks();
+        selectClip(clip);
 
     }
 
@@ -150,24 +270,20 @@ const VideoEditor = (() => {
         }
 
         const grid = document.createElement('div');
-
         grid.className = 'media-grid';
 
         state.files.forEach(media => {
 
             const item = document.createElement('div');
-
             item.className = 'media-item';
             item.dataset.id = media.id;
 
             const thumbnail = document.createElement('div');
-
             thumbnail.className = 'media-thumbnail';
 
             if (media.type === 'image') {
 
                 const image = document.createElement('img');
-
                 image.src = media.url;
                 image.alt = media.name;
 
@@ -176,28 +292,22 @@ const VideoEditor = (() => {
             } else {
 
                 const icon = document.createElement('span');
-
                 icon.className = 'media-file-icon';
-
-                icon.textContent =
-                    media.type === 'video' ? '▶' : '♫';
+                icon.textContent = media.type === 'video' ? '▶' : '♫';
 
                 thumbnail.appendChild(icon);
 
             }
 
             const info = document.createElement('div');
-
             info.className = 'media-item-info';
 
             const name = document.createElement('span');
-
             name.className = 'media-item-name';
             name.textContent = media.name;
             name.title = media.name;
 
             const type = document.createElement('small');
-
             type.textContent =
                 media.type === 'video' ? 'VIDEO' :
                 media.type === 'image' ? 'IMAGE' : 'AUDIO';
@@ -205,7 +315,6 @@ const VideoEditor = (() => {
             info.append(name, type);
 
             const deleteButton = document.createElement('button');
-
             deleteButton.className = 'media-delete';
             deleteButton.textContent = '×';
             deleteButton.title = 'حذف الملف';
@@ -229,6 +338,158 @@ const VideoEditor = (() => {
 
     }
 
+    // TIMELINE RENDERING
+
+    function renderTracks() {
+
+        Object.keys(state.tracks).forEach(track => {
+
+            const lane = elements.tracksArea.querySelector(
+                `.track-lane[data-track="${track}"]`
+            );
+
+            if (!lane) return;
+
+            lane.innerHTML = '';
+
+            const clips = state.tracks[track];
+
+            if (clips.length === 0) {
+
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'track-add-button';
+                button.dataset.addTrack =
+                    track === 'images' ? 'image' : track;
+
+                const icon = document.createElement('span');
+                icon.textContent = '＋';
+
+                const label = document.createElement('span');
+                label.textContent =
+                    track === 'video' ? 'اضغط لإضافة فيديو' :
+                    track === 'images' ? 'اضغط لإضافة صورة' :
+                    track === 'audio' ? 'اضغط لإضافة أغنية أو صوت' :
+                    'اضغط لإضافة نص';
+
+                button.append(icon, label);
+
+                button.addEventListener('click', () => {
+                    openTrackPicker(button.dataset.addTrack);
+                });
+
+                lane.appendChild(button);
+
+            } else {
+
+                clips.forEach(clip => {
+
+                    const block = document.createElement('button');
+                    block.type = 'button';
+                    block.className = 'timeline-clip';
+                    block.dataset.clipId = clip.id;
+
+                    const icon = document.createElement('span');
+                    icon.className = 'clip-icon';
+                    icon.textContent =
+                        track === 'video' ? '▶' :
+                        track === 'images' ? '▧' :
+                        track === 'audio' ? '♫' : 'T';
+
+                    const name = document.createElement('span');
+                    name.className = 'clip-name';
+                    name.textContent = clip.name;
+
+                    block.append(icon, name);
+
+                    block.addEventListener('click', () => {
+                        selectClip(clip);
+                    });
+
+                    lane.appendChild(block);
+
+                });
+
+                const addMore = document.createElement('button');
+                addMore.type = 'button';
+                addMore.className = 'track-add-more';
+                addMore.textContent = '＋';
+                addMore.title = 'إضافة عنصر آخر';
+
+                addMore.addEventListener('click', () => {
+                    openTrackPicker(
+                        track === 'images' ? 'image' : track
+                    );
+                });
+
+                lane.appendChild(addMore);
+
+            }
+
+        });
+
+    }
+
+    // SELECT CLIP
+
+    function selectClip(clip) {
+
+        state.activeClip = clip;
+
+        if (clip.media) {
+            previewMedia(clip.media);
+        }
+
+        elements.propertiesContent.innerHTML = `
+            <div class="properties-card">
+                <h3>خصائص العنصر</h3>
+                <p>${escapeHTML(clip.name)}</p>
+                <small>نوع العنصر: ${escapeHTML(clip.type)}</small>
+                <button type="button" id="deleteClipBtn" class="import-button">
+                    حذف من الخط الزمني
+                </button>
+            </div>
+        `;
+
+        document.getElementById('deleteClipBtn').addEventListener('click', () => {
+            removeClip(clip.id);
+        });
+
+        elements.tracksArea.querySelectorAll('.timeline-clip').forEach(item => {
+            item.classList.toggle(
+                'selected',
+                item.dataset.clipId === clip.id
+            );
+        });
+
+    }
+
+    function removeClip(id) {
+
+        Object.values(state.tracks).forEach(clips => {
+
+            const index = clips.findIndex(clip => clip.id === id);
+
+            if (index !== -1) {
+                clips.splice(index, 1);
+            }
+
+        });
+
+        state.activeClip = null;
+
+        renderTracks();
+
+        elements.propertiesContent.innerHTML = `
+            <div class="properties-empty">
+                <div class="properties-icon">◈</div>
+                <h3>لوحة التحكم</h3>
+                <p>حدد عنصرًا من الخط الزمني لعرض خصائصه</p>
+            </div>
+        `;
+
+    }
+
     // PREVIEW
 
     function previewMedia(media) {
@@ -238,7 +499,6 @@ const VideoEditor = (() => {
         stopPlayback();
 
         elements.previewPlaceholder.hidden = true;
-
         elements.previewImage.hidden = true;
         elements.previewVideo.hidden = true;
 
@@ -254,7 +514,6 @@ const VideoEditor = (() => {
 
             elements.previewVideo.src = media.url;
             elements.previewVideo.hidden = false;
-
             elements.previewVideo.load();
 
         } else {
@@ -319,16 +578,12 @@ const VideoEditor = (() => {
         }
 
         state.isPlaying = false;
-
         updatePlayButton();
 
     }
 
     function updatePlayButton() {
-
-        elements.playBtn.textContent =
-            state.isPlaying ? 'Ⅱ' : '▶';
-
+        elements.playBtn.textContent = state.isPlaying ? 'Ⅱ' : '▶';
     }
 
     function updateTime() {
@@ -340,21 +595,15 @@ const VideoEditor = (() => {
 
     function formatTime(seconds) {
 
-        if (!Number.isFinite(seconds)) {
-            return '00:00:00';
-        }
+        if (!Number.isFinite(seconds)) return '00:00:00';
 
         const hours = Math.floor(seconds / 3600);
-
         const minutes = Math.floor((seconds % 3600) / 60);
-
         const secs = Math.floor(seconds % 60);
 
-        return [
-            hours,
-            minutes,
-            secs
-        ].map(value => String(value).padStart(2, '0')).join(':');
+        return [hours, minutes, secs]
+            .map(value => String(value).padStart(2, '0'))
+            .join(':');
 
     }
 
@@ -364,9 +613,7 @@ const VideoEditor = (() => {
 
         const index = state.files.findIndex(media => media.id === id);
 
-        if (index === -1) {
-            return;
-        }
+        if (index === -1) return;
 
         const media = state.files[index];
 
@@ -395,19 +642,26 @@ const VideoEditor = (() => {
 
         }
 
+        Object.values(state.tracks).forEach(clips => {
+            for (let i = clips.length - 1; i >= 0; i--) {
+                if (clips[i].media?.id === id) {
+                    clips.splice(i, 1);
+                }
+            }
+        });
+
         URL.revokeObjectURL(media.url);
 
-        state.objectUrls = state.objectUrls.filter(url => {
-            return url !== media.url;
-        });
+        state.objectUrls = state.objectUrls.filter(url => url !== media.url);
 
         state.files.splice(index, 1);
 
         renderMediaLibrary();
+        renderTracks();
 
     }
 
-    // DRAG AND DROP
+    // DRAG AND DROP IMPORT AREA
 
     function setupDragAndDrop() {
 
@@ -425,7 +679,6 @@ const VideoEditor = (() => {
         importArea.addEventListener('drop', event => {
 
             event.preventDefault();
-
             importArea.classList.remove('drag-active');
 
             importFiles(event.dataTransfer.files);
@@ -460,10 +713,19 @@ const VideoEditor = (() => {
 
         const project = {
             name: 'مشروع بدون عنوان',
+
             media: state.files.map(media => ({
                 name: media.name,
                 type: media.type
             })),
+
+            tracks: {
+                video: state.tracks.video.map(clip => clip.name),
+                images: state.tracks.images.map(clip => clip.name),
+                audio: state.tracks.audio.map(clip => clip.name),
+                text: state.tracks.text.map(clip => clip.name)
+            },
+
             savedAt: new Date().toISOString()
         };
 
@@ -488,10 +750,8 @@ const VideoEditor = (() => {
 
     function createId() {
 
-        return (
-            Date.now().toString(36) +
-            Math.random().toString(36).slice(2)
-        );
+        return Date.now().toString(36) +
+            Math.random().toString(36).slice(2);
 
     }
 
@@ -506,8 +766,6 @@ const VideoEditor = (() => {
         })[char]);
 
     }
-
-    // CLEANUP
 
     window.addEventListener('beforeunload', () => {
 
@@ -524,9 +782,6 @@ const VideoEditor = (() => {
 
 })();
 
-
 document.addEventListener('DOMContentLoaded', () => {
-
     VideoEditor.init();
-
 });
