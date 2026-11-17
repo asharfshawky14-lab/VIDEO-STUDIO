@@ -80,12 +80,11 @@ const VideoStudio = {
     // Create a new editing project
     createProject() {
 
-        console.log("Create project requested");
+    console.log("Opening video editor");
 
-        alert("قريباً: إنشاء مشروع فيديو جديد");
+    window.location.href = "editor.html";
 
-    },
-
+},
     // Open application settings
     openSettings() {
 
